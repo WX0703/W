@@ -1,0 +1,75 @@
+import sys
+N,m = input().split(' ')
+N = eval(N)
+m = eval(m)
+Info = []
+for i in range(0,m):
+	message = sys.stdin.readline().strip().split(' ')
+	message = [eval(x) for x in message]
+	Info.append(message)
+
+#组内01背包问题求解
+def group(N,Info):
+	m = len(Info)
+	V0 = Info[0][0]//10
+	value = [[0,0]]
+	value0 = [[[0,0]]*(m+1) for _ in range(N//10+1)]
+	for j in range(0,N//10+1-V0):
+		for i in range(2,m+1):
+			if Info[i-1][0]<= j*10:
+				v1 = value0[j][i-1][0]
+				v2 = value0[j-Info[i-1][0]//10][i-1][0]+Info[i-1][0]*Info[i-1][1]
+				if v1>v2:
+					value0[j][i] = value0[j][i-1]
+				else:
+					value0[j][i] = [v2,value0[j-Info[i-1][0]//10][i-1][1]+Info[i-1][0]]
+			else:
+				value0[j][i] = value0[j][i-1]
+		# Max = [y for y in value0 if y[j][0] == max([x[j][0] for x in value0])]
+		Max = max([x[0] for x in value0[j]])
+		for x in value0[j]:
+			if x[0] == Max:
+				MAX = x
+				value.append([Info[0][0]*Info[0][1] + MAX[0],Info[0][0] + MAX[1]])
+	unique_value = []
+	for x in value:
+		if x not in unique_value:
+			unique_value.append(x)
+	# print(unique_value)
+	return unique_value
+
+#分组背包问题求解
+def bag(N,K,value0):
+	value = [[0]*(N//10+1) for _ in range(K+1)]
+	for k in range(1,K+1):
+		for i in range(0,N//10+1):
+			b = [0]
+			for a in value0[k-1]:
+				if a[1] <= i*10:
+					b.append(value[k-1][i-a[1]//10]+a[0])
+				# print(b)
+			value[k][i] = max(value[k-1][i],max(b))
+			del b
+			# print(value[k][i])
+	return value[K][N//10]
+			
+#分背包
+X = set([i[2] for i in Info])
+K = len(X)-1 #有附件的主件个数
+X1 = [i[2] for i in Info]
+K1 = X1.count(0) #所有主件个数
+Info0 = []
+p = 0
+for i in range(0,m):
+	if Info[i][2] == 0:
+		Info0.append([Info[i]])
+		for j in Info[i+1:m]:
+			if j[2] == i+1:
+				Info0[p].append(j)
+		p += 1
+
+value = []
+for i in range(0,K1):
+	value.append(group(N,Info0[i]))
+# print('value:',value)
+print(bag(N,K1,value))
